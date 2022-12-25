@@ -1,0 +1,89 @@
+
+CREATE TABLE hw_19.currency
+(
+    id integer NOT NULL,
+    name text,
+    PRIMARY KEY (id)
+);
+
+ALTER TABLE IF EXISTS hw_19.currency
+    OWNER to postgres;
+
+
+CREATE TABLE hw_19.wallet
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 ),
+    currency_id integer NOT NULL,
+    amount integer NOT NULL,
+    owner_id integer NOT NULL,
+    created timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT wallet_pkey PRIMARY KEY (id),
+    CONSTRAINT currency_fkey FOREIGN KEY (currency_id)
+        REFERENCES hw_19.currency (id) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+);
+
+ALTER TABLE IF EXISTS hw_19.wallet
+    OWNER to postgres;
+
+
+CREATE TABLE hw_19.owner
+(
+    id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 ),
+    name text,
+    surname text,
+    date_of_registration timestamp without time zone NOT NULL DEFAULT now(),
+    PRIMARY KEY (id)
+);
+
+ALTER TABLE IF EXISTS hw_19.owner
+    OWNER to postgres;
+
+
+ALTER TABLE IF EXISTS hw_19.wallet
+    ADD CONSTRAINT owner_fkey FOREIGN KEY (owner_id)
+    REFERENCES hw_19.owner (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+// *********************************************
+
+INSERT INTO hw_19.currency(id, name) VALUES
+	(980, 'UAH'),
+	(840, 'USD'),
+	(978, 'EUR');
+
+INSERT INTO hw_19.owner(name, surname) VALUES 
+	('Quinten', 'Anderson'),
+	('Grayson', 'Brooks'),
+	('Ronan', 'Baker'),
+	('Davis', 'Price');
+
+INSERT INTO hw_19.wallet(currency_id, amount, owner_id)	VALUES 
+	(980, 1000, 1),
+	(840, 25, 1),
+	(978, 150, 1),
+	(980, 550, 2),
+	(840, 130, 2),
+	(978, 300, 2),
+	(980, 0, 3),
+	(840, 1500, 3),
+	(978, 0, 3);
+
+// *********************************************
+
+SELECT 
+	owner.name AS owner,
+	coalesce(wallet.amount, 0) AS amount,
+	coalesce(currency.name, '') AS currency
+FROM
+	hw_19.owner
+LEFT JOIN hw_19.wallet 
+	ON owner.id = wallet.owner_id
+LEFT JOIN hw_19.currency 
+	ON wallet.currency_id = currency.id
+;
+
